@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#202124">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>CHRONO-RUN - Minimalist Dark Runner</title>
+    <title>CHRONO-RUN</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,92 +15,88 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
-            touch-action: none; /* Prevent pinch-zoom and bounce scroll on mobile */
+            touch-action: none;
         }
         body, html {
             width: 100%;
             height: 100%;
             overflow: hidden;
             background-color: #202124;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Courier New', Courier, monospace;
-            color: #535353;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 1.5s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Courier New', monospace;
+            color: #ffffff;
             position: fixed;
         }
         #game-container {
             position: relative;
             width: 100vw;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
+        }
+        /* Top Navigation & Score Header (Mobile-First Unified Bar) */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: max(env(safe-area-inset-top, 12px), 12px) 16px 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+            pointer-events: auto;
+        }
+        .btn-ctrl {
+            background: rgba(32, 33, 36, 0.8);
+            border: 1px solid #3c4043;
+            color: #9aa0a6;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+        }
+        .btn-ctrl:active {
+            border-color: #8ab4f8;
+            color: #e8eaed;
+            background: rgba(45, 46, 49, 0.95);
+        }
+        /* Score Card Pill */
+        #score-pill {
+            background: rgba(32, 33, 36, 0.85);
+            border: 1px solid #3c4043;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #757575;
+            font-family: 'Courier New', monospace;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #score-pill span {
+            color: #e8eaed;
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
         }
-        /* Top Minimalist Score HUD */
-        #hud {
-            position: absolute;
-            top: env(safe-area-inset-top, 20px);
-            right: 24px;
-            font-size: clamp(14px, 4vw, 18px);
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: #757575;
-            pointer-events: none;
-            z-index: 10;
-            font-family: monospace;
-            margin-top: 10px;
-        }
-        #hud span {
-            color: #acacac;
-        }
-        /* Top Controls: Sound & Skin Picker */
-        #top-controls {
-            position: absolute;
-            top: env(safe-area-inset-top, 20px);
-            left: 20px;
-            display: flex;
-            gap: 8px;
-            z-index: 20;
-            margin-top: 10px;
-        }
-        .btn-ctrl {
-            background: rgba(32, 33, 36, 0.85);
-            border: 1px solid #3c4043;
-            color: #9aa0a6;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: clamp(10px, 3vw, 12px);
-            cursor: pointer;
-            font-family: inherit;
-            letter-spacing: 1px;
-            transition: all 0.15s;
-            backdrop-filter: blur(8px);
-        }
-        .btn-ctrl:active, .btn-ctrl:hover {
-            border-color: #8ab4f8;
-            color: #e8eaed;
-            background: rgba(45, 46, 49, 0.95);
-        }
-        /* Desktop Instructions */
-        #instructions {
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            letter-spacing: 1px;
-            color: #5f6368;
-            pointer-events: none;
-            z-index: 10;
-            white-space: nowrap;
-        }
-        /* Mobile Touch Split Tap Zones (Invisible & Ergonomic) */
-        #mobile-touch-layer {
+        /* Invisible Split Touch Zones */
+        #touch-layer {
             position: absolute;
             top: 0;
             left: 0;
@@ -108,56 +104,53 @@
             height: 100%;
             display: flex;
             z-index: 5;
-            pointer-events: auto;
         }
         .touch-zone {
             flex: 1;
             height: 100%;
         }
-        /* Visual Mobile Touch Indicators */
-        #mobile-hud-prompts {
+        /* Bottom Touch Prompts Pill */
+        #bottom-prompts {
             position: absolute;
-            bottom: max(env(safe-area-inset-bottom, 20px), 24px);
+            bottom: max(env(safe-area-inset-bottom, 16px), 16px);
             left: 0;
             width: 100%;
-            padding: 0 28px;
-            display: none;
+            padding: 0 20px;
+            display: flex;
             justify-content: space-between;
             pointer-events: none;
             z-index: 10;
         }
-        .mobile-pill {
-            background: rgba(45, 46, 49, 0.65);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+        .touch-indicator {
+            background: rgba(32, 33, 36, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: #9aa0a6;
-            padding: 10px 18px;
-            border-radius: 24px;
-            font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 1px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
             backdrop-filter: blur(6px);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
         }
-        /* Gamepad Indicator Badge */
-        #gamepad-badge {
+        /* Desktop Keyboard Hint */
+        #desktop-hint {
             position: absolute;
-            top: env(safe-area-inset-top, 20px);
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(32, 33, 36, 0.85);
-            border: 1px solid #3c4043;
-            color: #8ab4f8;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 10px;
-            display: none;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: #5f6368;
+            pointer-events: none;
             z-index: 10;
-            margin-top: 10px;
+            display: none;
+            white-space: nowrap;
         }
-        /* Game Over Overlay */
+        @media (min-width: 801px) {
+            #bottom-prompts { display: none; }
+            #desktop-hint { display: block; }
+        }
+        /* Game Over Dialog */
         #game-over {
             position: absolute;
             top: 50%;
@@ -166,99 +159,101 @@
             text-align: center;
             display: none;
             z-index: 30;
-            width: 90%;
-            max-width: 380px;
+            width: 85%;
+            max-width: 340px;
             background: rgba(32, 33, 36, 0.95);
-            border: 1px solid #3c4043;
+            border: 1px solid #484c52;
             border-radius: 16px;
-            padding: 28px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            backdrop-filter: blur(12px);
+            padding: 24px 20px;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.7);
+            backdrop-filter: blur(14px);
         }
         #game-over h2 {
-            font-size: clamp(20px, 5vw, 24px);
-            letter-spacing: 3px;
+            font-size: 20px;
+            letter-spacing: 2px;
             color: #e8eaed;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
-        #game-over p {
+        #score-summary {
             font-size: 14px;
-            color: #9aa0a6;
-            letter-spacing: 1px;
+            color: #8ab4f8;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin: 6px 0 14px 0;
         }
         #restart-btn {
             background: #8ab4f8;
             color: #202124;
             border: none;
-            padding: 12px 28px;
+            padding: 10px 24px;
             font-family: inherit;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 13px;
             border-radius: 10px;
             cursor: pointer;
-            margin-top: 16px;
-            letter-spacing: 1px;
-            display: inline-block;
-        }
-        /* Mobile Touch Screen Rules */
-        @media (pointer: coarse) or (max-width: 800px) {
-            #mobile-hud-prompts {
-                display: flex;
-            }
-            #instructions {
-                display: none;
-            }
+            letter-spacing: 0.5px;
+            width: 100%;
         }
     </style>
 </head>
 <body>
 
     <div id="game-container">
+        
+        <!-- Mobile-Optimized Top Bar -->
+        <div id="top-bar">
+            <div class="header-buttons">
+                <button id="audio-toggle" class="btn-ctrl">🔊 ON</button>
+                <button id="skin-toggle" class="btn-ctrl">SKIN: ◻</button>
+            </div>
+            
+            <div id="score-pill">
+                HI <span id="hi-val">00000</span> &nbsp; <span id="score-val">00000</span>
+            </div>
+        </div>
+
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Invisible Screen-Split Touch Interaction Layer -->
-        <div id="mobile-touch-layer">
-            <div id="touch-left-zone" class="touch-zone" title="Tap Left to Duck/Drop"></div>
-            <div id="touch-right-zone" class="touch-zone" title="Tap Right to Jump/Double Jump"></div>
+        <!-- Invisible Screen-Split Touch Interaction Zones -->
+        <div id="touch-layer">
+            <div id="touch-left-zone" class="touch-zone" title="Tap Left to Duck"></div>
+            <div id="touch-right-zone" class="touch-zone" title="Tap Right to Jump"></div>
         </div>
 
-        <div id="top-controls">
-            <button id="audio-toggle" class="btn-ctrl">SOUND: ON</button>
-            <button id="skin-toggle" class="btn-ctrl">SKIN: CLASSIC</button>
+        <!-- Ergonomic Floating Mobile Indicators -->
+        <div id="bottom-prompts">
+            <div class="touch-indicator">▼ HOLD LEFT TO DUCK</div>
+            <div class="touch-indicator">▲ TAP RIGHT TO JUMP</div>
         </div>
 
-        <div id="gamepad-badge">🎮 GAMEPAD CONNECTED</div>
-
-        <div id="hud">
-            HI <span id="hi-val">00000</span> &nbsp; <span id="score-val">00000</span>
+        <!-- Desktop Hint -->
+        <div id="desktop-hint">
+            [SPACE/↑] JUMP • [↓] DUCK • DOUBLE-TAP IN AIR TO DOUBLE-JUMP
         </div>
 
-        <div id="instructions">
-            [SPACE/↑/A-BTN] JUMP (TAP IN AIR FOR DOUBLE-JUMP) • [↓/B-BTN] DUCK / FAST DROP
-        </div>
-
-        <!-- Ergonomic Mobile HUD Prompts -->
-        <div id="mobile-hud-prompts">
-            <div class="mobile-pill">▼ TAP LEFT: DUCK</div>
-            <div class="mobile-pill">▲ TAP RIGHT: JUMP</div>
-        </div>
-
+        <!-- Game Over Modal -->
         <div id="game-over">
-            <h2>G A M E &nbsp; O V E R</h2>
-            <p id="score-summary"></p>
-            <button id="restart-btn">TAP TO RESTART</button>
+            <h2>GAME OVER</h2>
+            <div id="score-summary">SCORE: 00000</div>
+            <button id="restart-btn">PLAY AGAIN</button>
         </div>
+
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Dynamic Pixel-Perfect Responsive Resizing
+        // High-DPI Mobile & Desktop Canvas Scaling
+        let logicalWidth = window.innerWidth;
+        let logicalHeight = window.innerHeight;
+
         function resize() {
+            logicalWidth = window.innerWidth;
+            logicalHeight = window.innerHeight;
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
+            canvas.width = logicalWidth * dpr;
+            canvas.height = logicalHeight * dpr;
             ctx.scale(dpr, dpr);
         }
         window.addEventListener('resize', resize);
@@ -328,16 +323,15 @@
             e.stopPropagation();
             initAudio();
             audioEnabled = !audioEnabled;
-            audioToggle.innerText = audioEnabled ? "SOUND: ON" : "SOUND: OFF";
-            audioToggle.style.color = audioEnabled ? "#9aa0a6" : "#5f6368";
+            audioToggle.innerText = audioEnabled ? "🔊 ON" : "🔇 OFF";
         });
 
-        // 2. Custom Skins System
+        // 2. Skins
         const SKINS = [
-            { name: "CLASSIC", shape: "square", color: "#e8eaed", eye: "#202124" },
-            { name: "CYBER NEON", shape: "neon_triangle", color: "#00f0ff", eye: "#ff007a" },
-            { name: "GOLD PHANTOM", shape: "diamond", color: "#f59e0b", eye: "#ffffff" },
-            { name: "EMERALD BOT", shape: "bot", color: "#10b981", eye: "#042f2e" }
+            { icon: "◻", shape: "square", color: "#e8eaed", eye: "#202124" },
+            { icon: "🔷", shape: "neon_triangle", color: "#00f0ff", eye: "#ff007a" },
+            { icon: "🔶", shape: "diamond", color: "#f59e0b", eye: "#ffffff" },
+            { icon: "🟩", shape: "bot", color: "#10b981", eye: "#042f2e" }
         ];
         let currentSkinIndex = 0;
 
@@ -345,7 +339,7 @@
         skinToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             currentSkinIndex = (currentSkinIndex + 1) % SKINS.length;
-            skinToggle.innerText = `SKIN: ${SKINS[currentSkinIndex].name}`;
+            skinToggle.innerText = `SKIN: ${SKINS[currentSkinIndex].icon}`;
             playSound('gem');
         });
 
@@ -362,19 +356,17 @@
         const scoreVal = document.getElementById('score-val');
         const gameOverModal = document.getElementById('game-over');
         const scoreSummary = document.getElementById('score-summary');
-        const gamepadBadge = document.getElementById('gamepad-badge');
         const restartBtn = document.getElementById('restart-btn');
 
         hiVal.innerText = highScore.toString().padStart(5, '0');
 
-        // Player Entity
         const player = {
-            x: 80,
+            x: 60, // Sits comfortably on phone screen left
             y: 0,
-            baseWidth: 26,
-            baseHeight: 34,
-            width: 26,
-            height: 34,
+            baseWidth: 24,
+            baseHeight: 32,
+            width: 24,
+            height: 32,
             vy: 0,
             onGround: false,
             canDoubleJump: true,
@@ -384,7 +376,6 @@
         const GRAVITY = 0.65;
         const JUMP_FORCE = 12.0;
 
-        // Entities
         const obstacles = [];
         const bonusBits = [];
         const particles = [];
@@ -395,21 +386,21 @@
         function initBackground() {
             clouds.length = 0;
             groundDots.length = 0;
-            const floorY = window.innerHeight * 0.65;
+            const floorY = logicalHeight * 0.68;
 
-            for(let i=0; i<6; i++) {
+            for(let i=0; i<5; i++) {
                 clouds.push({
-                    x: Math.random() * window.innerWidth,
+                    x: Math.random() * logicalWidth,
                     y: Math.random() * (floorY - 140) + 40,
                     w: Math.random() * 40 + 30,
                     h: 10
                 });
             }
 
-            for(let i=0; i<30; i++) {
+            for(let i=0; i<25; i++) {
                 groundDots.push({
-                    x: Math.random() * window.innerWidth,
-                    y: floorY + Math.random() * 15 + 4,
+                    x: Math.random() * logicalWidth,
+                    y: floorY + Math.random() * 12 + 4,
                     w: Math.random() * 3 + 1
                 });
             }
@@ -417,26 +408,26 @@
         initBackground();
 
         function spawnObstacle() {
-            const floorY = window.innerHeight * 0.65;
+            const floorY = logicalHeight * 0.68;
             const isBird = currentScore > 180 && Math.random() < 0.35;
 
             if (isBird) {
-                const birdHeight = Math.random() < 0.5 ? floorY - 30 : floorY - 58;
+                const birdHeight = Math.random() < 0.5 ? floorY - 28 : floorY - 54;
                 obstacles.push({
-                    x: window.innerWidth + 50,
+                    x: logicalWidth + 40,
                     y: birdHeight,
-                    w: 28,
-                    h: 16,
+                    w: 26,
+                    h: 15,
                     type: 'bird',
                     wing: 0
                 });
             } else {
                 const count = Math.random() < 0.3 ? 2 : 1;
-                const h = Math.random() * 12 + 25;
+                const h = Math.random() * 10 + 24;
                 obstacles.push({
-                    x: window.innerWidth + 50,
+                    x: logicalWidth + 40,
                     y: floorY - h,
-                    w: 15 * count,
+                    w: 14 * count,
                     h: h,
                     type: 'cactus'
                 });
@@ -444,15 +435,15 @@
 
             if (Math.random() < 0.25) {
                 bonusBits.push({
-                    x: window.innerWidth + 120,
-                    y: floorY - Math.random() * 70 - 40,
+                    x: logicalWidth + 100,
+                    y: floorY - Math.random() * 65 - 35,
                     size: 8,
                     collected: false
                 });
             }
         }
 
-        // 4. Action Handlers (Desktop, Mobile & Gamepad)
+        // 4. Action Handlers
         function doJump() {
             initAudio();
             if (isGameOver) {
@@ -469,14 +460,13 @@
                 for(let i=0; i<4; i++) {
                     runningDust.push({
                         x: player.x + Math.random() * player.width,
-                        y: window.innerHeight * 0.65 - 2,
+                        y: logicalHeight * 0.68 - 2,
                         vx: -Math.random() * 2 - 1,
                         vy: -Math.random() * 1.5,
                         size: 3, alpha: 0.8
                     });
                 }
             } else if (!player.onGround && player.canDoubleJump && !player.isDucking) {
-                // Double Jump in mid-air
                 player.vy = -JUMP_FORCE * 0.85;
                 player.canDoubleJump = false;
                 playSound('double_jump');
@@ -500,7 +490,7 @@
             }
         }
 
-        // Mobile Split-Touch Screen Controls
+        // Mobile Screen Split Touch Handlers
         const touchRight = document.getElementById('touch-right-zone');
         const touchLeft = document.getElementById('touch-left-zone');
 
@@ -508,7 +498,7 @@
         touchLeft.addEventListener('touchstart', (e) => { e.preventDefault(); setDucking(true); }, { passive: false });
         touchLeft.addEventListener('touchend', (e) => { e.preventDefault(); setDucking(false); }, { passive: false });
 
-        // Keyboard Controls
+        // Keyboard Handlers
         window.addEventListener('keydown', e => {
             initAudio();
             if (e.code === 'Space' || e.code === 'ArrowUp' || e.key.toLowerCase() === 'w') {
@@ -526,34 +516,6 @@
                 setDucking(false);
             }
         });
-
-        // Gamepad Loop
-        let gamepadConnected = false;
-        let lastGamepadJumpPressed = false;
-
-        function checkGamepad() {
-            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-            const gp = gamepads[0];
-
-            if (gp) {
-                if (!gamepadConnected) {
-                    gamepadConnected = true;
-                    gamepadBadge.style.display = 'block';
-                }
-
-                const isJumpPressed = gp.buttons[0]?.pressed || gp.buttons[12]?.pressed;
-                if (isJumpPressed && !lastGamepadJumpPressed) {
-                    doJump();
-                }
-                lastGamepadJumpPressed = isJumpPressed;
-
-                const isDuckPressed = gp.buttons[1]?.pressed || gp.buttons[13]?.pressed;
-                setDucking(isDuckPressed);
-            } else if (gamepadConnected) {
-                gamepadConnected = false;
-                gamepadBadge.style.display = 'none';
-            }
-        }
 
         function triggerGameOver() {
             isGameOver = true;
@@ -607,8 +569,6 @@
         let stepDustTimer = 0;
 
         function update() {
-            checkGamepad();
-
             if (isGameOver) {
                 particles.forEach(p => {
                     p.x += p.vx;
@@ -619,18 +579,18 @@
                 return;
             }
 
-            const floorY = window.innerHeight * 0.65;
+            const floorY = logicalHeight * 0.68;
 
-            // Ducking Dimensions
+            // Ducking
             if (player.isDucking && player.onGround) {
-                player.width = 38;
+                player.width = 36;
                 player.height = 18;
             } else {
                 player.width = player.baseWidth;
                 player.height = player.baseHeight;
             }
 
-            // Player Gravity
+            // Gravity
             player.vy += GRAVITY;
             player.y += player.vy;
 
@@ -663,10 +623,10 @@
                 playSound('milestone');
             }
 
-            // Smooth Progressive Speed
+            // Gentle Progressive Speed
             speed = BASE_SPEED + Math.log10(1 + currentScore * 0.003) * 3.2;
 
-            // Obstacle Spawner
+            // Spawner
             spawnTimer += 1;
             const spawnInterval = Math.max(50, 110 - (speed * 4.5));
             if (spawnTimer > spawnInterval) {
@@ -676,14 +636,13 @@
                 }
             }
 
-            // Move Obstacles
+            // Obstacles
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i];
                 obs.x -= speed;
                 if (obs.type === 'bird') obs.wing += 0.15;
 
-                // Forgiving Margin
-                const margin = 5;
+                const margin = 4;
                 if (player.x + player.width - margin > obs.x && player.x + margin < obs.x + obs.w) {
                     if (player.y + player.height - margin > obs.y && player.y + margin < obs.y + obs.h) {
                         triggerGameOver();
@@ -694,7 +653,7 @@
                 if (obs.x < -60) obstacles.splice(i, 1);
             }
 
-            // Move Bonus Bits (✦)
+            // Bonus Bits (✦)
             for (let i = bonusBits.length - 1; i >= 0; i--) {
                 const bit = bonusBits[i];
                 bit.x -= speed;
@@ -710,15 +669,15 @@
                 if (bit.x < -20) bonusBits.splice(i, 1);
             }
 
-            // Background movement
+            // Clouds & Ground
             clouds.forEach(c => {
                 c.x -= speed * 0.25;
-                if (c.x < -60) c.x = window.innerWidth + 40;
+                if (c.x < -60) c.x = logicalWidth + 40;
             });
 
             groundDots.forEach(g => {
                 g.x -= speed;
-                if (g.x < -10) g.x = window.innerWidth + 10;
+                if (g.x < -10) g.x = logicalWidth + 10;
             });
 
             // Dust decay
@@ -737,9 +696,9 @@
         // 6. Draw Loop
         function draw() {
             ctx.fillStyle = '#202124';
-            ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+            ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
-            const floorY = window.innerHeight * 0.65;
+            const floorY = logicalHeight * 0.68;
             const shakeOffset = (Math.random() - 0.5) * screenShake;
             const activeSkin = SKINS[currentSkinIndex];
 
@@ -754,7 +713,7 @@
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(0, floorY + shakeOffset);
-            ctx.lineTo(window.innerWidth, floorY + shakeOffset);
+            ctx.lineTo(logicalWidth, floorY + shakeOffset);
             ctx.stroke();
 
             // Ground Dots
@@ -793,7 +752,7 @@
                 }
             });
 
-            // Draw Player with Custom Skins
+            // Draw Player
             if (!isGameOver) {
                 ctx.fillStyle = activeSkin.color;
                 
